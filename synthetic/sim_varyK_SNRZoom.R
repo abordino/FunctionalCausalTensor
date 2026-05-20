@@ -1,8 +1,6 @@
 setwd("~/Documents/phd/projects/causalMatrix/code")
 
-
 source("mu_L4block.R")
-source("oracle_mu_L4block_pool.R")
 source("oracle_mu_L4block_pool_local.R")
 
 options(stringsAsFactors = FALSE)
@@ -158,56 +156,6 @@ est_real_pool = function(Y_list, k, r, x, y, tau, N1_vec, T1_vec) {
   )
 }
 
-est_real_nopool = function(Y_list, k, r, x, y, tau, N1_vec, T1_vec) {
-  L = xy_to_L(x, y)
-  
-  mu_L4block_pool(
-    Y = list(Y_list[[k]]),
-    k = 1,
-    r = r,
-    U_L = L$U_L,
-    Sigma_L = L$Sigma_L,
-    V_L = L$V_L,
-    tau = tau,
-    N1 = N1_vec[k],
-    T1 = T1_vec[k]
-  )
-}
-
-est_oracle_pool = function(Y_list, k, U, V, R_list, x, y, N1_vec, T1_vec) {
-  L = xy_to_L(x, y)
-  
-  oracle_mu_L4block_pool(
-    Y = Y_list,
-    k = k,
-    U = U,
-    V = V,
-    R_list = R_list,
-    U_L = L$U_L,
-    Sigma_L = L$Sigma_L,
-    V_L = L$V_L,
-    N1 = N1_vec,
-    T1 = T1_vec
-  )
-}
-
-est_oracle_nopool = function(Y_list, k, U, V, R_list, x, y, N1_vec, T1_vec) {
-  L = xy_to_L(x, y)
-  
-  oracle_mu_L4block_pool(
-    Y = list(Y_list[[k]]),
-    k = 1,
-    U = U,
-    V = V,
-    R_list = list(R_list[[k]]),
-    U_L = L$U_L,
-    Sigma_L = L$Sigma_L,
-    V_L = L$V_L,
-    N1 = N1_vec[k],
-    T1 = T1_vec[k]
-  )
-}
-
 est_oracle_local = function(Y_list, k, U, V, R_list, x, y, N1_vec, T1_vec) {
   L = xy_to_L(x, y)
   
@@ -230,14 +178,7 @@ run_one_config = function(N, Tt, K, r, SNR_target, nrep,
                           scenario_label = "scenario",
                           base_seed = 2026, target_arm = 1,
                           tau = 2) {
-  methods = c(
-    "real_pool",
-    "real_nopool",
-    "oracle_pool",
-    "oracle_nopool",
-    "oracle_local"
-  )
-  
+  methods = c("real_pool", "oracle_local")
   rows = vector("list", length(methods) * nrep)
   idx = 1
   
@@ -294,47 +235,6 @@ run_one_config = function(N, Tt, K, r, SNR_target, nrep,
       )
     )
     
-    mu_r1 = safe_mu(
-      est_real_nopool(
-        Y_list = dat$Y_list,
-        k = target_arm,
-        r = r,
-        x = x,
-        y = y,
-        tau = tau,
-        N1_vec = N1_vec,
-        T1_vec = T1_vec
-      )
-    )
-    
-    mu_op = safe_mu(
-      est_oracle_pool(
-        Y_list = dat$Y_list,
-        k = target_arm,
-        U = dat$U,
-        V = dat$V,
-        R_list = dat$R_list,
-        x = x,
-        y = y,
-        N1_vec = N1_vec,
-        T1_vec = T1_vec
-      )
-    )
-    
-    mu_o1 = safe_mu(
-      est_oracle_nopool(
-        Y_list = dat$Y_list,
-        k = target_arm,
-        U = dat$U,
-        V = dat$V,
-        R_list = dat$R_list,
-        x = x,
-        y = y,
-        N1_vec = N1_vec,
-        T1_vec = T1_vec
-      )
-    )
-    
     mu_oL = safe_mu(
       est_oracle_local(
         Y_list = dat$Y_list,
@@ -351,9 +251,6 @@ run_one_config = function(N, Tt, K, r, SNR_target, nrep,
     
     mu_map = list(
       real_pool = mu_rp,
-      real_nopool = mu_r1,
-      oracle_pool = mu_op,
-      oracle_nopool = mu_o1,
       oracle_local = mu_oL
     )
     
@@ -438,37 +335,26 @@ plot_mse_vs_K_pretty = function(sumdf, raw_df, file_png, main_title = NULL,
                                 error_bar = c("ci95", "se", "sd", "none")) {
   error_bar = match.arg(error_bar)
   
-  methods = c(
-    "oracle_pool",
-    "oracle_nopool",
-    "oracle_local",
-    "real_pool",
-    "real_nopool"
-  )
+  methods = c("oracle_local", "real_pool")
+  snr_vals = sort(unique(sumdf$SNR_target))
   
   col_map = c(
-    oracle_pool = "#7570b3",
-    oracle_nopool = "#e7298a",
     oracle_local = "#f95919",
-    real_pool = "#1b9e77",
-    real_nopool = "#d95f02"
+    real_pool = "#1b9e77"
   )
   
   pch_map = c(
-    oracle_pool = 15,
-    oracle_nopool = 18,
     oracle_local = 20,
-    real_pool = 16,
-    real_nopool = 17
+    real_pool = 16
   )
   
   lab_map = c(
-    oracle_pool = TeX(r"(Oracle pooled)"),
-    oracle_nopool = TeX(r"(Oracle no-pool)"),
     oracle_local = TeX(r"(Oracle local $A_3$)"),
-    real_pool = TeX(r"(Estimated pooled)"),
-    real_nopool = TeX(r"(Estimated no-pool)")
+    real_pool = TeX(r"(Estimated pooled)")
   )
+  
+  lty_candidates = c(1, 2, 3, 4, 5, 6)
+  lty_map = setNames(lty_candidates[seq_along(snr_vals)], as.character(snr_vals))
   
   Ks = sort(unique(sumdf$K))
   
@@ -487,13 +373,31 @@ plot_mse_vs_K_pretty = function(sumdf, raw_df, file_png, main_title = NULL,
     sumdf$ERR[!is.finite(sumdf$ERR)] = 0
   }
   
-  y_max = max(sumdf$MSE + sumdf$ERR, na.rm = TRUE)
+  pos_vals = c(
+    sumdf$MSE,
+    sumdf$MSE + sumdf$ERR
+  )
+  
+  pos_vals = pos_vals[is.finite(pos_vals) & pos_vals > 0]
+  eps = if (length(pos_vals) > 0) min(pos_vals) * 0.5 else 1e-16
+  
+  y_upper_all = log10(pmax(sumdf$MSE + sumdf$ERR, eps))
+  y_lower_all = log10(pmax(sumdf$MSE - sumdf$ERR, eps))
+  y_line_all = log10(pmax(sumdf$MSE, eps))
+  
+  y_min = min(c(y_lower_all, y_line_all), na.rm = TRUE)
+  y_max = max(c(y_upper_all, y_line_all), na.rm = TRUE)
+  y_rng = diff(range(y_min, y_max))
+  
+  if (!is.finite(y_rng) || y_rng == 0) {
+    y_rng = 1
+  }
   
   cu_max = max(raw_df$c_u, na.rm = TRUE)
   cell_min = min(raw_df$c_ell, na.rm = TRUE)
   
   if (is.null(main_title)) {
-    main_title = TeX(r"(MSE vs.\ $K$)")
+    main_title = TeX(r"($\log_{10}(MSE)$ vs.\ $K$)")
   } else {
     main_title = TeX(main_title)
   }
@@ -509,14 +413,17 @@ plot_mse_vs_K_pretty = function(sumdf, raw_df, file_png, main_title = NULL,
   png(file_png, width = 1450, height = 650, res = 140, bg = "white")
   on.exit(dev.off())
   
-  par(mar = c(5, 5, 3.5, 11), xpd = NA, bg = "white")
+  par(mar = c(5, 5, 4, 15), xpd = NA, bg = "white")
   
   plot(
     Ks,
     rep(NA, length(Ks)),
-    ylim = c(0, y_max * 1.14),
+    ylim = c(
+      y_min - 0.08 * y_rng,
+      y_max + 0.18 * y_rng
+    ),
     xlab = TeX(r"($K$)"),
-    ylab = TeX(r"($MSE$)"),
+    ylab = TeX(r"($\log_{10}(MSE)$)"),
     main = main_title,
     type = "n"
   )
@@ -527,42 +434,54 @@ plot_mse_vs_K_pretty = function(sumdf, raw_df, file_png, main_title = NULL,
   box()
   
   for (m in methods) {
-    dm = sumdf[sumdf$method == m, ]
-    dm = dm[order(dm$K), ]
-    
-    lines(
-      dm$K,
-      dm$MSE,
-      type = "b",
-      col = col_map[m],
-      pch = pch_map[m],
-      lty = 1,
-      lwd = 2
-    )
-    
-    if (error_bar != "none") {
-      ok = is.finite(dm$ERR) & is.finite(dm$MSE)
+    for (snr in snr_vals) {
+      dm = sumdf[sumdf$method == m & sumdf$SNR_target == snr, ]
+      dm = dm[order(dm$K), ]
       
-      if (any(ok)) {
-        arrows(
-          x0 = dm$K[ok],
-          y0 = pmax(0, dm$MSE[ok] - dm$ERR[ok]),
-          x1 = dm$K[ok],
-          y1 = dm$MSE[ok] + dm$ERR[ok],
-          angle = 90,
-          code = 3,
-          length = 0.03,
-          col = adjustcolor(col_map[m], alpha.f = 0.95),
-          lwd = 0.8,
-          lty = 3
-        )
+      this_lty = lty_map[as.character(snr)]
+      y_line = log10(pmax(dm$MSE, eps))
+      
+      lines(
+        dm$K,
+        y_line,
+        type = "b",
+        col = col_map[m],
+        pch = pch_map[m],
+        lty = this_lty,
+        lwd = 2
+      )
+      
+      if (error_bar != "none") {
+        ok = is.finite(dm$ERR) & is.finite(dm$MSE) & dm$MSE > 0
+        
+        if (any(ok)) {
+          y_low = log10(pmax(dm$MSE[ok] - dm$ERR[ok], eps))
+          y_high = log10(pmax(dm$MSE[ok] + dm$ERR[ok], eps))
+          
+          pos = is.finite(y_low) & is.finite(y_high) & y_high > y_low
+          
+          if (any(pos)) {
+            arrows(
+              x0 = dm$K[ok][pos],
+              y0 = y_low[pos],
+              x1 = dm$K[ok][pos],
+              y1 = y_high[pos],
+              angle = 90,
+              code = 3,
+              length = 0.03,
+              col = adjustcolor(col_map[m], alpha.f = 0.95),
+              lwd = 0.8,
+              lty = this_lty
+            )
+          }
+        }
       }
     }
   }
   
   text(
     x = mean(range(Ks)),
-    y = y_max * 1.12,
+    y = y_max + 0.13 * y_rng,
     labels = TeX(sprintf(
       "$\\max c_u = %.4f$ \\ $\\min c_{\\ell} = %.4f$ \\ Error bars: %s",
       cu_max, cell_min, error_label
@@ -571,9 +490,11 @@ plot_mse_vs_K_pretty = function(sumdf, raw_df, file_png, main_title = NULL,
     cex = 0.80
   )
   
+  x_leg = usr[2] + 0.08 * diff(usr[1:2])
+  
   legend(
-    "topright",
-    inset = c(-0.3, 0),
+    x = x_leg,
+    y = usr[4],
     legend = unname(lab_map[methods]),
     col = col_map[methods],
     pch = pch_map[methods],
@@ -582,14 +503,25 @@ plot_mse_vs_K_pretty = function(sumdf, raw_df, file_png, main_title = NULL,
     bty = "n",
     title = TeX(r"(Method)")
   )
+  
+  legend(
+    x = x_leg,
+    y = usr[4] - 0.32 * diff(usr[3:4]),
+    legend = paste0("SNR = ", snr_vals),
+    col = "black",
+    lty = unname(lty_map[as.character(snr_vals)]),
+    lwd = 2,
+    bty = "n",
+    title = "SNR"
+  )
 }
 
 N = 100
 Tt = 80
 r = 6
-Ks = c(1, 2, 5, 10, 20, 50, 200)
+Ks = c(50, 150, 300, 500, 1000)
 
-SNR_target = 1
+SNR_targets = c(1, 100, 10000)
 svals = seq(2, 0.6, length.out = r)
 
 nrep = 500
@@ -600,59 +532,82 @@ N1_window = c(70, 70)
 T1_window = c(60, 60)
 scenario_label = "window"
 
-raw_list = vector("list", length(Ks))
+raw_all = vector("list", length(SNR_targets))
+idx_all = 1
 
-for (i in seq_along(Ks)) {
-  K = Ks[i]
-  print(K)
+for (snr in SNR_targets) {
+  cat(sprintf("\nRunning SNR_target = %s\n", snr))
   
-  raw_list[[i]] = run_one_config(
-    N = N,
-    Tt = Tt,
-    K = K,
-    r = r,
-    SNR_target = SNR_target,
-    nrep = nrep,
-    svals = svals,
-    N1_range = N1_window,
-    T1_range = T1_window,
-    scenario_label = scenario_label,
-    base_seed = base_seed,
-    target_arm = 1,
-    tau = tau
-  )
+  raw_list = vector("list", length(Ks))
+  
+  for (i in seq_along(Ks)) {
+    K = Ks[i]
+    print(K)
+    
+    raw_list[[i]] = run_one_config(
+      N = N,
+      Tt = Tt,
+      K = K,
+      r = r,
+      SNR_target = snr,
+      nrep = nrep,
+      svals = svals,
+      N1_range = N1_window,
+      T1_range = T1_window,
+      scenario_label = scenario_label,
+      base_seed = base_seed,
+      target_arm = 1,
+      tau = tau
+    )
+  }
+  
+  raw_all[[idx_all]] = do.call(rbind, raw_list)
+  idx_all = idx_all + 1
 }
 
-raw_df = do.call(rbind, raw_list)
+raw_df = do.call(rbind, raw_all)
 sumdf = summarize_mse(raw_df)
 
-cat(sprintf("max c_u   = %.6f\n", max(raw_df$c_u, na.rm = TRUE)))
-cat(sprintf("min c_ell = %.6f\n", min(raw_df$c_ell, na.rm = TRUE)))
+cat(sprintf("\nOverall max c_u   = %.6f\n", max(raw_df$c_u, na.rm = TRUE)))
+cat(sprintf("Overall min c_ell = %.6f\n", min(raw_df$c_ell, na.rm = TRUE)))
+
+for (snr in SNR_targets) {
+  tmp = raw_df[raw_df$SNR_target == snr, ]
+  
+  cat(sprintf(
+    "SNR_target=%s: max c_u = %.6f, min c_ell = %.6f\n",
+    snr,
+    max(tmp$c_u, na.rm = TRUE),
+    min(tmp$c_ell, na.rm = TRUE)
+  ))
+}
 
 print(sumdf)
 
 dir.create("synthetic/result", recursive = TRUE, showWarnings = FALSE)
 dir.create("synthetic/figure", recursive = TRUE, showWarnings = FALSE)
 
+snr_tag = paste(SNR_targets, collapse = "_")
+
 tag = paste0(
-  "SNR", SNR_target,
+  "multiSNR_", snr_tag,
   "_N1win", N1_window[1], "-", N1_window[2],
   "_T1win", T1_window[1], "-", T1_window[2]
 )
 
 raw_file = file.path(
   "synthetic/result",
-  paste0("raw_compare_pooling_oracle_varyK_randomXY_", tag, ".csv")
+  paste0("Zoomraw_compare_pooling_oracleLocal_varyK_randomXY_", tag, ".csv")
 )
 
 sum_file = file.path(
   "synthetic/result",
-  paste0("summary_compare_pooling_oracle_varyK_randomXY_", tag, ".csv")
+  paste0("Zoomsummary_compare_pooling_oracleLocal_varyK_randomXY_", tag, ".csv")
 )
 
 fig_file = file.path(
   "synthetic/figure",
-  paste0("compare_mse_vs_K_pooling_oracle_randomXY_", tag, ".png")
+  paste0("Zoomcompare_logMSE_vs_K_pooling_oracleLocal_randomXY_", tag, ".png")
 )
 
 write.csv(raw_df, raw_file, row.names = FALSE)
@@ -663,8 +618,8 @@ plot_mse_vs_K_pretty(
   raw_df = raw_df,
   file_png = fig_file,
   main_title = sprintf(
-    "MSE vs. $K$ (SNR=%s, $N_1=%d$, $T_1=%d$)",
-    1 / SNR_target,
+    "$\\log_{10}(MSE)$ vs. $K$ (SNR targets = %s, $N_1=%d$, $T_1=%d$)",
+    paste(SNR_targets, collapse = ", "),
     N1_window[1],
     T1_window[1]
   ),
@@ -672,26 +627,26 @@ plot_mse_vs_K_pretty(
 )
 
 ## Reload saved results and regenerate plot without rerunning simulations
-raw_file_3 = "synthetic/4Block/result/raw_compare_pooling_oracle_varyK_randomXY_SNR1_N1win70-70_T1win60-60.csv"
-sum_file_3 = "synthetic/4Block/result/summary_compare_pooling_oracle_varyK_randomXY_SNR1_N1win70-70_T1win60-60.csv"
+raw_file_2 = "synthetic/4Block/result/Zoomraw_compare_pooling_oracleLocal_varyK_randomXY_multiSNR_1_100_10000_N1win70-70_T1win60-60.csv"
+sum_file_2 = "synthetic/4Block/result/Zoomsummary_compare_pooling_oracleLocal_varyK_randomXY_multiSNR_1_100_10000_N1win70-70_T1win60-60.csv"
 
-raw_df_loaded_3 = read.csv(raw_file_3)
-sumdf_loaded_3 = read.csv(sum_file_3)
+raw_df_loaded_2 = read.csv(raw_file_2)
+sumdf_loaded_2 = read.csv(sum_file_2)
 
-print(sumdf_loaded_3)
+print(sumdf_loaded_2)
 
-fig_file_loaded_3 = file.path(
+fig_file_loaded_2 = file.path(
   "synthetic/4Block/figure",
-  "compare_mse_vs_K_pooling_oracle_randomXY_SNR1_N1win70-70_T1win60-60.png"
+  "Zoomcompare_logMSE_vs_K_pooling_oracleLocal_randomXY_multiSNR_1_100_10000_N1win70-70_T1win60-60.png"
 )
 
 plot_mse_vs_K_pretty(
-  sumdf = sumdf_loaded_3,
-  raw_df = raw_df_loaded_3,
-  file_png = fig_file_loaded_3,
+  sumdf = sumdf_loaded_2,
+  raw_df = raw_df_loaded_2,
+  file_png = fig_file_loaded_2,
   main_title = sprintf(
-    "MSE vs. $K$ (SNR=%s, $N_1=%d$, $T_1=%d$)",
-    1 / SNR_target,
+    "$\\log_{10}(MSE)$ vs. $K$ (SNR targets = %s, $N_1=%d$, $T_1=%d$)",
+    paste(SNR_targets, collapse = ", "),
     N1_window[1],
     T1_window[1]
   ),
