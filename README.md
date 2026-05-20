@@ -6,3 +6,9 @@ In the main directory, you will find implementations of the algorithms presented
 
 - **`synthetic/`**  
   Validate our procedure on synthetically generated datasets.
+
+- **`real-world/CastleDoctrine/`**  
+  Apply the method to the Castle Doctrine staggered-adoption dataset, using state-year crime outcomes to study policy effects across multiple crime-rate panels.
+
+- **`real-world/covid/`**  
+  Apply the method to the Our World in Data COVID-19 dataset, using country-day deaths and policy stringency measures to study staggered high-stringency adoption across pandemic periods.
