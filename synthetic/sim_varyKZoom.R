@@ -585,7 +585,9 @@ plot_mse_vs_K_pretty(
   error_bar = "ci95"
 )
 
+#------------------------------------------------------------------------------
 ## Reload saved results and regenerate plot without rerunning simulations
+#------------------------------------------------------------------------------
 
 raw_file_1 = "synthetic/4Block/result/Zoomraw_compare_pooling_oracle_varyK_randomXY_SNR1_N1win70-70_T1win60-60.csv"
 sum_file_1 = "synthetic/4Block/result/Zoomsummary_compare_pooling_oracle_varyK_randomXY_SNR1_N1win70-70_T1win60-60.csv"

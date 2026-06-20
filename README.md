@@ -5,4 +5,11 @@ This repository contains the implementation of the tests presented in [this pape
 In the main directory, you will find implementations of the algorithms presented in the paper.
 
 - **`synthetic/`**  
-  Validate our procedure on synthetically generated datasets.
+  Validate our theoretical claims on synthetically generated datasets.
+
+- **`real-world/CastleDoctrine`**
+  Validate our methodologies on the Castle Doctrine dataset  
+
+- **`real-world/CovidOx`**
+Validate our methodologies on the Castle Doctrine dataset 
+  

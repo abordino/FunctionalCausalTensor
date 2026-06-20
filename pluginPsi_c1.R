@@ -1,3 +1,6 @@
+# Here we need to reorder the target layer in staircase form and 
+# provide N_parts and T_parts
+
 pluginPsi_c1 = function(Y, k, N_parts, T_parts,
                         functional = c("ATE", "RowHet", "Local", "Trend"),
                         eta = NULL,
@@ -60,7 +63,6 @@ pluginPsi_c1 = function(Y, k, N_parts, T_parts,
         
       } else if (functional == "Trend") {
         
-        ## Skip one-year column blocks, because the centred trend vector is zero.
         if (Tbk <= 1) {
           next
         }
@@ -86,7 +88,7 @@ pluginPsi_c1 = function(Y, k, N_parts, T_parts,
 }
 
 ## ---------------------------------------------------------------
-## Wrappers for c = 1 plug-in quantities
+## Wrappers
 ## ---------------------------------------------------------------
 
 pluginPsi1_ATE = function(Y, k, N_parts, T_parts) {
