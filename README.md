@@ -1,4 +1,5 @@
-# FunctionalCausalTensor: Optimal Estimation of Linear and Quadratic Functionals for Tensor Data in Staggered Adoption Settings
+# BilinearCausalTensor: Direct and efficient estimation of bilinear forms in staggered
+tensor panels
 
 This repository contains the implementation of the tests presented in [this paper](TBA), along with code to reproduce all simulations and experiments.
 
