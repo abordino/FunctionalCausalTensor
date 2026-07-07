@@ -1,5 +1,0 @@
-layer_index,outcome,policy,panel_label,original_outcome_index,original_policy_index
-1,new_deaths_smoothed_per_million,C6_stay_at_home_requirements,"new_deaths_smoothed_per_million
-Policy: C6 | cap: 1",1,1
-2,new_cases_smoothed_per_million,H3_contact_tracing,"new_cases_smoothed_per_million
-Policy: H3 | cap: 20",2,2
