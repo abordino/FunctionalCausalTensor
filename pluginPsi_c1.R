@@ -1,6 +1,3 @@
-# Here we need to reorder the target layer in staircase form and 
-# provide N_parts and T_parts
-
 pluginPsi_c1 = function(Y, k, N_parts, T_parts,
                         functional = c("ATE", "RowHet", "Local", "Trend"),
                         eta = NULL,

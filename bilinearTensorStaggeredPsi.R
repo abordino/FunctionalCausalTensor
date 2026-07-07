@@ -2,12 +2,7 @@
 # bilinearTensorStaggeredPsi
 #
 # Estimates Psi_0^{(h)}(k) over all policy-on / missing target
-# blocks in target slice k, for h in {"ATE", "RowHet", "Local", "Trend"}.
-#
-# This wrapper is compatible with
-#
-#   bilinearTensorStaggered(Y, k, a, b, r, x, y, A = NULL,
-#                           Omega = NULL, tau)
+# blocks in target slice k, for h in {"ATE", "RowHet", "Local", "Trend"}
 #
 # Args:
 #   Y          : list of K N x T matrices, or N x T x K array
@@ -182,7 +177,7 @@ bilinearTensorStaggeredPsi = function(Y, k, r, tau,
   col_parts = Map(seq, col_starts, col_ends)
   
   if (length(col_parts) != o_k) {
-    stop("Internal error: row and column partitions have different lengths.")
+    stop("Row and column partitions have different lengths.")
   }
   
   if (functional == "RowHet") {

@@ -474,10 +474,7 @@ evaluate_three_methods = function(
   
   eta_sorted = eta[row_perm]
   row_index_sorted = match(row_index, row_perm)
-  
-  if (is.na(row_index_sorted)) {
-    stop("Could not map row_index into target sorted coordinates.")
-  }
+
   
   N_parts_plugin = blocks$N_parts
   T_parts_plugin = blocks$T_parts

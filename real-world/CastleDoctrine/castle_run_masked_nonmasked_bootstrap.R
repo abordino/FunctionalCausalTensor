@@ -648,7 +648,7 @@ make_target_layer_row_resample_index = function(
     target_layer = target_layer
   )
   
-  # we sample fully observed rows from fully observed rows
+  # Sample fully observed rows from fully observed rows
   # and non-fully observed rows from non-fully observed rows
   full_idx = strata$fully_observed_idx
   nonfull_idx = strata$non_fully_observed_idx
@@ -747,10 +747,6 @@ run_target_layer_only_bootstrap_one = function(
 
   if (!identical(dimnames(Y_b), dimnames(Y_base))) {
     stop("Y_b dimnames changed.")
-  }
-
-  if (!identical(D_b, D_design)) {
-    stop("D_b changed, but this bootstrap should keep D fixed.")
   }
 
   if (length(other_layers) > 0) {

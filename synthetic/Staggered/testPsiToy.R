@@ -38,12 +38,12 @@ A_inclusive[, 2] = sample(c(Inf, Inf, 6, 6, 4, 4, 2, 2), size = N, replace = FAL
 A_inclusive[, 3] = sample(c(Inf, Inf, 6, 6, 4, 4, 2, 2), size = N, replace = FALSE)
 
 cat("\nInclusive adoption-time matrix A_inclusive\n")
-cat("Toy convention: observed if t <= A_inclusive[i,k]\n")
+cat("Observed if t <= A_inclusive[i,k]\n")
 print(A_inclusive)
 
 
 # ===============================================================
-# 3. Convert to estimator convention
+# 3. Convert to estimator
 # ===============================================================
 
 A_exclusive = A_inclusive
@@ -52,7 +52,7 @@ finite_idx = is.finite(A_exclusive)
 A_exclusive[finite_idx] = A_exclusive[finite_idx] + 1
 
 cat("\nExclusive adoption-time matrix A_exclusive\n")
-cat("Estimator convention: observed if t < A_exclusive[i,k]\n")
+cat("Observed if t < A_exclusive[i,k]\n")
 print(A_exclusive)
 
 
@@ -343,7 +343,7 @@ print(all(abs(toy_compare$tensor_minus_plugin) < tol))
 # ===============================================================
 
 cat("\n==================================================\n")
-cat("LAST PRINT: target matrix before ordering\n")
+cat("Target matrix before ordering\n")
 cat("==================================================\n")
 print(round(M[, , target_k], 4))
 
@@ -351,7 +351,7 @@ cat("\nTarget observed matrix before ordering, NA = missing\n")
 print(round(Y_obs[, , target_k], 4))
 
 cat("\n==================================================\n")
-cat("LAST PRINT: target matrix after ordering\n")
+cat("Target matrix after ordering\n")
 cat("==================================================\n")
 print(round(M[row_perm, , target_k], 4))
 

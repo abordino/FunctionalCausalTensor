@@ -1,8 +1,6 @@
 # ---------------------------------------------------------------
 # bilinearMatrixStaggered
 #
-# Matrix-only wrapper for staggered adoption missingness.
-#
 # This estimates
 #
 #   mu_{xy}^{(a,b)} = x' M^{(a,b)} y
@@ -210,7 +208,7 @@ bilinearMatrixStaggered = function(Y_mat, a, b, r, x, y,
   r_eff = min(r, n_aux, t_aux, length(S_plus), length(Q_plus))
   
   if (r_eff < 1) {
-    stop("Effective rank is zero. Check r and the target-layer anchor blocks.")
+    stop("Effective rank is zero")
   }
   
   # -------------------------------------------------------------

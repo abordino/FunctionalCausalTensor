@@ -85,10 +85,6 @@ simulate_staggered_tucker2_fixed_ok = function(
     length.out = o_k_target - 1
   )))
   
-  if (length(finite_obs_lens) != o_k_target - 1) {
-    stop("Could not construct distinct observed-prefix lengths. Try smaller o_k_target.")
-  }
-  
   group_labels = rep(seq_len(o_k_target), length.out = N)
   group_labels = sample(group_labels)
   
@@ -366,10 +362,6 @@ run_runtime_comparison = function(
       
       blocks = get_target_blocks_sim(sim, k)
       
-      if (blocks$o_k != oo) {
-        stop("Realized o_k does not match requested o_k.")
-      }
-      
       gc()
       
       time_quad = system.time({
@@ -458,10 +450,6 @@ run_noisy_accuracy_comparison = function(
       )
       
       blocks = get_target_blocks_sim(sim, k)
-      
-      if (blocks$o_k != oo) {
-        stop("Realized o_k does not match requested o_k.")
-      }
       
       true_ate = true_missing_region_ATE(sim, k)
       

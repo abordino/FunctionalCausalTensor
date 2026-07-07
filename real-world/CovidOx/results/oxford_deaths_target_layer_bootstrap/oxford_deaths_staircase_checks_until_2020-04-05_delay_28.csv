@@ -1,0 +1,3 @@
+layer,policy_slice,staircase
+new_deaths_smoothed_per_million,C6_stay_at_home_requirements,FALSE
+new_cases_smoothed_per_million,H3_contact_tracing,FALSE

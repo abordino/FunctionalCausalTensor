@@ -1,8 +1,6 @@
 # ---------------------------------------------------------------
 # bilinearMatrixStaggeredPsi
 #
-# Matrix-only Psi wrapper for staggered adoption missingness.
-#
 # Estimates Psi_0^{(h)} over all missing staggered blocks using
 # one N x T matrix Y_mat.
 #
@@ -156,7 +154,7 @@ bilinearMatrixStaggeredPsi = function(Y_mat, r, tau,
   col_parts = Map(seq, col_starts, col_ends)
   
   if (length(col_parts) != o) {
-    stop("Internal error: row and column partitions have different lengths.")
+    stop("Row and column partitions have different lengths.")
   }
   
   # -------------------------------------------------------------

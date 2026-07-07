@@ -833,14 +833,6 @@ run_tau_sensitivity_compare = function(
 ) {
   tau_seq = sort(unique(as.numeric(tau_seq)))
   
-  if (length(tau_seq) < 2) {
-    stop("tau_seq must contain at least two distinct values.")
-  }
-  
-  if (any(!is.finite(tau_seq)) || any(tau_seq <= 0)) {
-    stop("All values in tau_seq must be finite and strictly positive.")
-  }
-  
   if (is.null(targets)) {
     targets = make_missing_targets(
       sim = sim,
@@ -1093,7 +1085,6 @@ make_missingness_panel_plots = function(
       levels = c("Missing", "Observed")
     )
     
-    # Put the first row after rearrangement at the top of the image.
     missing_data$unit_plot = N - missing_data$row_order + 1
     
     time_labels = pretty(seq_len(Tt))

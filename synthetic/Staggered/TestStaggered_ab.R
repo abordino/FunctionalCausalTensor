@@ -1092,25 +1092,3 @@ plot_missingness_and_abs_error_barplot(
   targets = targets,
   target_k = 1
 )
-
-
-cat("\nAggregate comparison\n")
-cat("--------------------------------------------------\n")
-cat("Mean abs error, tensor-pooled:",
-    mean(diagnostics_all$abs_error_tensor),
-    "\n")
-cat("Mean abs error, matrix-only  :",
-    mean(diagnostics_all$abs_error_matrix),
-    "\n")
-cat("Ratio matrix / tensor        :",
-    mean(diagnostics_all$abs_error_matrix) /
-      max(mean(diagnostics_all$abs_error_tensor), 1e-12),
-    "\n")
-
-
-cat("\nMain scalar check for noisy diagnostics\n")
-cat("--------------------------------------------------\n")
-cat("Mean matrix-only abs error / tensor-pooled abs error:",
-    mean(diagnostics_compare$abs_error_matrix) /
-      max(mean(diagnostics_compare$abs_error_tensor), 1e-12),
-    "\n")

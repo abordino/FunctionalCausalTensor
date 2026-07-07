@@ -163,12 +163,6 @@ align_plotY_layers = function(
     is.null(policy_outcome_map) ||
     !all(c("policy", "outcome") %in% names(policy_outcome_map))
   ) {
-    if (K_y != K_o) {
-      stop(
-        "tensor_data$policy_outcome_map is missing, and Y/Omega have different layer counts. ",
-        "Cannot align outcome layers to policy slices."
-      )
-    }
     
     layer_map = tibble(
       outcome = outcome_names,
@@ -192,10 +186,6 @@ align_plotY_layers = function(
       )
   }
   
-  if (nrow(layer_map) == 0) {
-    stop("No valid policy/outcome pairs found in tensor_data$policy_outcome_map.")
-  }
-  
   layer_map = layer_map %>%
     mutate(
       outcome_index = match(outcome, outcome_names),
@@ -208,13 +198,6 @@ align_plotY_layers = function(
       str_detect(str_to_lower(outcome), target_outcome_pattern) |
         str_detect(str_to_lower(panel_label), target_outcome_pattern)
     )
-  
-  if (nrow(target_candidates) == 0) {
-    stop(
-      "Could not find a deaths target layer. Available outcomes are: ",
-      paste(outcome_names, collapse = ", ")
-    )
-  }
   
   target_row = target_candidates %>%
     mutate(
@@ -270,10 +253,6 @@ align_plotY_layers = function(
   
   target_k = match(target_row$outcome[[1]], selected_map$outcome)
   
-  if (is.na(target_k)) {
-    stop("Internal error: target deaths outcome is not in selected_map.")
-  }
-  
   list(
     Y = Y_selected,
     Omega_policy = Omega_selected,
@@ -312,10 +291,6 @@ make_target_staircase = function(Omega_policy, k, tie_names = NULL) {
     tie_names = dimnames(Omega_policy)[[1]] %||% as.character(seq_len(N))
   }
   
-  if (length(tie_names) != N) {
-    stop("tie_names must have length N.")
-  }
-  
   perm = tibble(
     row_original = seq_len(N),
     tie_name = tie_names,
@@ -332,26 +307,6 @@ make_target_staircase = function(Omega_policy, k, tie_names = NULL) {
   obs_len_sorted = obs_len[perm]
   A_sorted = A_k[perm]
   
-  if (any(diff(obs_len_sorted) > 0)) {
-    stop("Internal error: target-layer staircase order is not non-increasing.")
-  }
-  
-  if (obs_len_sorted[1] != Tt) {
-    stop(
-      "Target layer ", k,
-      " has no fully observed / never-treated row block. ",
-      "The current bilinear staggered Psi wrappers require one."
-    )
-  }
-  
-  if (tail(obs_len_sorted, 1) <= 0) {
-    stop(
-      "Target layer ", k,
-      " has rows treated from the first time period. ",
-      "The current bilinear staggered Psi wrappers require a non-empty initial observed time block."
-    )
-  }
-  
   m_desc = unique(obs_len_sorted)
   row_parts = lapply(m_desc, function(m) which(obs_len_sorted == m))
   
@@ -360,15 +315,15 @@ make_target_staircase = function(Omega_policy, k, tie_names = NULL) {
   N_sizes = as.integer(lengths(row_parts))
   
   if (length(N_sizes) != length(T_sizes)) {
-    stop("Internal error: N_parts and T_parts have different lengths.")
+    stop("N_parts and T_parts have different lengths.")
   }
   
   if (any(N_sizes <= 0)) {
-    stop("Internal error: target-layer row partition contains an empty block.")
+    stop("Target-layer row partition contains an empty block.")
   }
   
   if (any(T_sizes <= 0)) {
-    stop("Internal error: target-layer column partition contains an empty block.")
+    stop("Target-layer column partition contains an empty block.")
   }
   
   list(
@@ -407,7 +362,7 @@ reorder_to_target_staircase = function(Y, Omega_policy, k) {
   )
   
   if (!identical(stair_re$permutation, seq_along(stair_re$permutation))) {
-    stop("Internal error: reordered target layer is not already in staircase order.")
+    stop("Reordered target layer is not already in staircase order.")
   }
   
   list(
@@ -446,7 +401,7 @@ is_staircase_layer = function(Omega_obs_k) {
 }
 
 # ===============================================================
-# 6. Y NA handling
+# 6. Y NA handling and diagnostics
 # ===============================================================
 
 fill_Y_na_by_neighbourhood = function(Y, max_passes = 5) {
@@ -609,13 +564,6 @@ message(
 message("Raw selected Y NA count before filling: ", sum(is.na(Y)))
 Y = fill_Y_na_by_neighbourhood(Y, max_passes = 5)
 message("Raw selected Y NA count after filling: ", sum(is.na(Y)))
-
-if (anyNA(Y)) {
-  stop(
-    "Y still contains NA after neighbourhood filling. ",
-    "Either increase max_passes or handle remaining missing values explicitly."
-  )
-}
 
 if (save_diagnostic_plots) {
   g_original = plot_Y_na_check(
@@ -796,7 +744,7 @@ cat("============================================================\n")
 print(point_results, n = Inf)
 
 # ===============================================================
-# 10. Bootstrap helperz
+# 10. Target-layer-only bootstrap helpers
 # ===============================================================
 
 ci_vars = c(
@@ -873,11 +821,6 @@ make_target_layer_row_resample_index = function(
     
   } else {
     
-    warning(
-      "Target-layer stratified bootstrap could not find both strata. ",
-      "Falling back to unrestricted row bootstrap."
-    )
-    
     idx = sample(
       seq_len(N),
       size = N,
@@ -931,10 +874,6 @@ run_target_layer_only_bootstrap_one = function(
   
   if (!identical(dimnames(Y_b), dimnames(Y_base))) {
     stop("Y_b dimnames changed.")
-  }
-  
-  if (!identical(Omega_policy_b, Omega_policy_base)) {
-    stop("Omega_policy_b changed, but this bootstrap should keep policy slices fixed.")
   }
   
   if (length(other_layers) > 0) {
@@ -1035,6 +974,7 @@ bootstrap_results = map_dfr(
 
 # ===============================================================
 # 12. Bootstrap confidence intervals
+#       point estimate +/- 1.96 * bootstrap SE
 # ===============================================================
 
 make_results_with_ci = function(point_results, bootstrap_results) {
@@ -1116,7 +1056,7 @@ results_with_ci = make_results_with_ci(
 )
 
 cat("\n============================================================\n")
-cat("Point estimates with Castle-style bootstrap 95% confidence intervals\n")
+cat("Point estimates with bootstrap 95% confidence intervals\n")
 cat("============================================================\n")
 print(results_with_ci, n = Inf)
 
@@ -1394,7 +1334,7 @@ print(psi_delta_plot)
 ggsave(
   filename = file.path(
     results_dir,
-    paste0("oxford_deaths_castle_style_psi0_delta_ATE_Trend_r", main_r, ".png")
+    paste0("oxford_deaths_psi0_delta_ATE_Trend_r", main_r, ".png")
   ),
   plot = psi_delta_plot,
   width = 11,

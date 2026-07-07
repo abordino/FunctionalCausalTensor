@@ -234,7 +234,7 @@ bilinearTensorStaggered = function(Y, k, a, b, r, x, y, A = NULL,
   r_eff = min(r, n_aux, t_aux, sum(N1_aux), sum(T1_aux))
   
   if (r_eff < 1) {
-    stop("Effective rank is zero. Check r and the auxiliary anchor sets.")
+    stop("Effective rank is zero")
   }
   
   # -------------------------------------------------------------

@@ -1,0 +1,3 @@
+setting,target_outcome,target_policy,functional,Psi0,Psi0_matrix,Psi1,Delta_h,Delta_h_matrix,tensor_minus_matrix,N_parts,T_parts
+plotY_slice,new_deaths_smoothed_per_million,C6_stay_at_home_requirements,ATE,3.422831,1.11748,1.589677,-1.833153,0.472197,2.305351,"2,1,1,1,2,1,1,1,1,3,1,3","8,2,1,1,1,2,3,1,1,4,2,6"
+plotY_slice,new_deaths_smoothed_per_million,C6_stay_at_home_requirements,Trend,-0.036029,0.002607,-0.031587,0.004442,-0.034195,-0.038636,"2,1,1,1,2,1,1,1,1,3,1,3","8,2,1,1,1,2,3,1,1,4,2,6"

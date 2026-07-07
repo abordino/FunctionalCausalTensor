@@ -7,14 +7,10 @@ library(lubridate)
 library(stringr)
 
 # -----------------------------
-# User input
+# Load saved tensors
 # -----------------------------
 
 tensor_file = "data/Omega_Y_until_2020-04-05_delay_28.rds"
-
-# -----------------------------
-# Load saved tensors
-# -----------------------------
 
 tensor_data = readRDS(tensor_file)
 

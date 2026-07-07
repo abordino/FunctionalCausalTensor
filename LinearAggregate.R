@@ -10,7 +10,7 @@
 #   Omega  : optional N x T x K logical observation mask
 #
 # Output:
-#   psi_hat, or a full fit object when return_fit = TRUE
+#   psi_hat
 #
 # =============================================================================
 
@@ -198,7 +198,7 @@ makeTargetStaircaseBlocks = function(Y, k, A = NULL, Omega = NULL) {
   col_blocks = Map(seq, time_block_starts, time_block_ends)
   
   if (length(row_blocks) != length(col_blocks)) {
-    stop("Internal error: row and column partitions have different lengths.")
+    stop("Row and column partitions have different lengths.")
   }
   
   list(
@@ -416,7 +416,7 @@ determine_linear_rank = function(blocks, k, r, active_row_blocks, active_col_blo
   }
   
   if (r_eff < 1) {
-    stop("Effective rank is zero. Check r and the reduced-anchor sets.")
+    stop("Effective rank is zero.")
   }
   
   r_eff
@@ -475,7 +475,7 @@ build_left_fit = function(blocks, k, a, r_eff, functional, eta = NULL, local_pos
   target_rows_local = match(target_rows, rows_for_fit)
   
   if (anyNA(target_rows_local)) {
-    stop(sprintf("Internal error: target rows are not contained in rows_for_fit for a = %s.", a))
+    stop(sprintf("Target rows are not contained in rows_for_fit for a = %s.", a))
   }
   
   x = make_x(blocks, a, functional, eta = eta, local_pos = local_pos)
@@ -557,7 +557,7 @@ build_upper_fit = function(blocks, k, b, r_eff, functional) {
   target_cols_local = match(target_cols, cols_for_fit)
   
   if (anyNA(target_cols_local)) {
-    stop(sprintf("Internal error: target columns are not contained in cols_for_fit for b = %s.", b))
+    stop(sprintf("Target columns are not contained in cols_for_fit for b = %s.", b))
   }
   
   V_target = V_upper[target_cols_local, , drop = FALSE]
@@ -655,7 +655,7 @@ bilinearTensorStaggeredLinearReducedAnchor = function(Y, k, r, tau,
     
     if (anyNA(upper_rows_in_left_fit)) {
       stop(sprintf(
-        "Internal error: upper rows for b = %s are not contained in left rows for a = %s.",
+        "Upper rows for b = %s are not contained in left rows for a = %s.",
         b, a
       ))
     }
