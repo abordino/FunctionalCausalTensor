@@ -57,7 +57,7 @@ bilinearTensorStaggeredPsi = function(Y, k, r, tau,
   stopifnot(tau > 0)
   
   # -------------------------------------------------------------
-  # Infer or validate A and Omega
+  # Infer A and Omega
   # -------------------------------------------------------------
   
   if (is.null(A) && is.null(Omega)) {
