@@ -24,9 +24,6 @@
 
 bilinearMatrixStaggered = function(Y_mat, a, b, r, x, y,
                                    A = NULL, Omega = NULL, tau) {
-  if (!is.matrix(Y_mat)) {
-    stop("Y_mat must be a matrix.")
-  }
   
   N = nrow(Y_mat)
   Tt = ncol(Y_mat)
