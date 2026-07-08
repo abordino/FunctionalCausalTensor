@@ -31,16 +31,6 @@ delay_days = tensor_data$delay_days
 
 all_dates = as.Date(date_names)
 
-cat("Loaded Omega dimensions:", dim(Omega), "\n")
-cat("Loaded Y dimensions:", dim(Y), "\n")
-cat("Countries:", length(country_levels), "\n")
-cat("Dates:", length(date_names), "\n")
-cat("Policies:", paste(policies, collapse = ", "), "\n")
-cat("Outcomes:", paste(outcomes, collapse = ", "), "\n")
-cat("Outcome delay in days:", delay_days, "\n")
-cat("NA in Omega:", sum(is.na(Omega)), "\n")
-cat("NA in Y:", sum(is.na(Y)), "\n")
-
 # -----------------------------
 # Country labels
 # -----------------------------
