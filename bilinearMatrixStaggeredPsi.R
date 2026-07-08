@@ -28,23 +28,11 @@ bilinearMatrixStaggeredPsi = function(Y_mat, r, tau,
                                       A = NULL,
                                       Omega = NULL) {
   functional = match.arg(functional)
-  
-  # -------------------------------------------------------------
-  # Basic checks
-  # -------------------------------------------------------------
-  
-  if (!is.matrix(Y_mat)) {
-    stop("Y_mat must be a matrix.")
-  }
-  
   N = nrow(Y_mat)
   Tt = ncol(Y_mat)
   
-  stopifnot(r >= 1)
-  stopifnot(tau > 0)
-  
   # -------------------------------------------------------------
-  # Infer or validate A and Omega
+  # Infer A and Omega
   # -------------------------------------------------------------
   
   if (is.null(A) && is.null(Omega)) {
