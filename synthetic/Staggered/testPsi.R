@@ -11,10 +11,10 @@ source("pluginPsi_c1.R")
 # 0. Global parameters
 # ===============================================================
 
-MASTER_SEED = 221198
+seed = 221198
 N_REP = 30
 
-set.seed(MASTER_SEED)
+set.seed(seed)
 
 K_values = c(1, 2, 5)
 sigma_values = c(0, 0.01)
@@ -31,7 +31,7 @@ MAKE_DETAILED_PLOTS = TRUE
 
 
 # ===============================================================
-# 1. Direct oracle calculation of Psi from known signal M with staircase structure
+# 1. Direct oracle calculation of Psi from known signal M with staircase miissingness
 # ===============================================================
 
 directPsi = function(M, k = 1, N_parts, T_parts,
@@ -1346,25 +1346,6 @@ overall_summary = data.frame(
 )
 
 print(overall_summary)
-
-
-cat("\n==================================================\n")
-cat("Tensor vs matrix error ratio\n")
-cat("==================================================\n")
-
-cat(
-  "Mean abs error ratio, matrix / tensor:",
-  mean(all_results$abs_error_matrix) /
-    max(mean(all_results$abs_error_tensor), 1e-12),
-  "\n"
-)
-
-cat(
-  "Median abs error ratio, matrix / tensor:",
-  median(all_results$abs_error_matrix) /
-    max(median(all_results$abs_error_tensor), 1e-12),
-  "\n"
-)
 
 
 # ===============================================================
