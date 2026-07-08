@@ -593,26 +593,13 @@ run_accuracy_check_compare = function(
   
   cat("Tensor-pooled method\n")
   cat("Mean absolute error  :", mean(abs_err_tensor_vec), "\n")
-  cat("Median absolute error:", median(abs_err_tensor_vec), "\n")
-  cat("Max absolute error   :", max(abs_err_tensor_vec), "\n")
-  cat("Mean relative error  :", mean(rel_err_tensor_vec), "\n")
-  cat("Median relative error:", median(rel_err_tensor_vec), "\n")
-  cat("Correlation          :", cor(mu_hat_tensor_vec, mu_true_vec), "\n\n")
   
   cat("Matrix-only method\n")
   cat("Mean absolute error  :", mean(abs_err_matrix_vec), "\n")
-  cat("Median absolute error:", median(abs_err_matrix_vec), "\n")
-  cat("Max absolute error   :", max(abs_err_matrix_vec), "\n")
-  cat("Mean relative error  :", mean(rel_err_matrix_vec), "\n")
-  cat("Median relative error:", median(rel_err_matrix_vec), "\n")
-  cat("Correlation          :", cor(mu_hat_matrix_vec, mu_true_vec), "\n\n")
   
   cat("Error ratio: matrix / tensor\n")
   cat("Mean absolute error ratio  :",
       mean(abs_err_matrix_vec) / max(mean(abs_err_tensor_vec), 1e-12),
-      "\n")
-  cat("Median absolute error ratio:",
-      median(abs_err_matrix_vec) / max(median(abs_err_tensor_vec), 1e-12),
       "\n")
   
   invisible(diagnostics)
