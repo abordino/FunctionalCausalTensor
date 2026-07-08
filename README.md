@@ -1,6 +1,6 @@
 # BilinearCausalTensor: Direct and efficient estimation of bilinear forms in staggered tensor panels
 
-This repository contains the implementation of the tests presented in [this paper](TBA), along with code to reproduce all simulations and experiments.
+This repository contains the implementation of the algorithms presented in [this paper](TBA), along with code to reproduce all simulations and experiments.
 
 In the main directory, you will find implementations of the algorithms introduced in the paper.
 
