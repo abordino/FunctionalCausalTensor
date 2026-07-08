@@ -207,14 +207,6 @@ if (is.na(target_layer_index)) {
 target_crimes = setNames(target_layer, target_name)
 target_label = unname(crime_labels[target_layer])
 
-cat("\nCreated tensors:\n")
-cat("Y:", paste(dim(Y), collapse = " x "), "\n")
-cat("D_original:", paste(dim(D_original), collapse = " x "), "\n")
-cat("Dimension order: state x year x crime\n")
-cat("Target layer:", target_layer, "\n")
-cat("Rank:", rank_value, "\n")
-cat("Bootstrap B:", B, "\n")
-
 # ===============================================================
 # 5. Source functions
 # ===============================================================
