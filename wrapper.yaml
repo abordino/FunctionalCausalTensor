@@ -1,0 +1,6 @@
+simulations:
+  synthetic4block: true
+  sensitivityTau: true
+  runtimeVsAccuracy: true
+  castle: true
+  covid: true
