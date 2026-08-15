@@ -85,7 +85,6 @@ run_cy_noiseless_staggered_test = function(
   cat("\n============================================================\n")
   cat("CY noiseless staggered-panel diagnostic\n")
   cat("============================================================\n")
-  cat("Method file:       ", method_path, "\n", sep = "")
   cat("Seed:              ", seed, "\n", sep = "")
   cat("Matrix dimensions: ", nrow(panel$truth), " x ", ncol(panel$truth), "\n", sep = "")
   cat("Numerical rank:    ", panel$true_rank, "\n", sep = "")
