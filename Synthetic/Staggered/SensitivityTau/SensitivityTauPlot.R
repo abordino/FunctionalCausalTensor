@@ -15,6 +15,8 @@ required_files = c(
   "tau_sensitivity_config.csv"
 )
 
+font_scale = 1.7
+
 missing_files = required_files[
   !file.exists(file.path(results_dir, required_files))
 ]
@@ -260,18 +262,28 @@ make_tau_plot = function(summary_data, add_standard_error = TRUE) {
         override.aes = list(color = "gray25", linewidth = 0, size = 2.8)
       )
     ) +
-    theme_bw(base_size = 11) +
+    theme_bw(base_size = 11 * font_scale) +
     theme(
       panel.grid.major = element_line(color = "gray88", linewidth = 0.35),
       panel.grid.minor = element_blank(),
-      plot.title = element_text(size = 11, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(size = 9, hjust = 0.5),
-      axis.title = element_text(size = 10),
-      axis.text = element_text(size = 9),
+      plot.title = element_text(
+        size = 11 * font_scale,
+        face = "bold",
+        hjust = 0.5
+      ),
+      plot.subtitle = element_text(
+        size = 9 * font_scale,
+        hjust = 0.5
+      ),
+      axis.title = element_text(size = 10 * font_scale),
+      axis.text = element_text(size = 9 * font_scale),
       legend.position = "bottom",
       legend.box = "vertical",
-      legend.title = element_text(size = 9, face = "bold"),
-      legend.text = element_text(size = 8.5),
+      legend.title = element_text(
+        size = 9 * font_scale,
+        face = "bold"
+      ),
+      legend.text = element_text(size = 8.5 * font_scale),
       legend.key.width = unit(1.25, "lines"),
       legend.spacing.x = unit(0.7, "lines"),
       legend.spacing.y = unit(0.15, "lines"),

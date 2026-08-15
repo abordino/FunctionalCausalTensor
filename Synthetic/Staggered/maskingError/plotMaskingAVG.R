@@ -25,20 +25,20 @@ save_plot_png = function(plot, filename, width, height, dpi = 320) {
 # Settings --------------------------------------------------------------------
 
 JUMP = 80L
-STEP_SIZE = 1L # 1L
+STEP_SIZE = 3L # 3L
 REP = 30L
 
-RUN_CY = FALSE
+RUN_CY = TRUE
 
-N_LAYERS = 4L
+N_UNITS = 50L
+N_PERIODS = 11L
+TUCKER_RANK_UNIT = 2L
+TUCKER_RANK_TIME = 2L
 
-target_name = "motor"
-
-DATASET_TAG = "castle"
-RESULTS_STUDY_TAG = "castle_staggered_masking_rank2"
+target_name = "layer2"
 
 PLOT_GRID = crossing(
-  N_LAYERS = N_LAYERS,
+  N_LAYERS = 4L,
   rank_value = c(1L, 2L, 3L)
 )
 
@@ -81,16 +81,29 @@ plot_one_result = function(N_LAYERS, rank_value) {
   N_LAYERS = as.integer(N_LAYERS)
   rank_value = as.integer(rank_value)
   
+  DATASET_TAG = sprintf(
+    "synthetic_tucker2_%dx%dx%d",
+    N_UNITS,
+    N_PERIODS,
+    N_LAYERS
+  )
+  
+  RESULTS_STUDY_TAG = paste0(
+    DATASET_TAG,
+    "_staggered_masking_signalrank",
+    TUCKER_RANK_UNIT,
+    "x",
+    TUCKER_RANK_TIME
+  )
+  
   results_dir = file.path(
     "Results",
-    RESULTS_STUDY_TAG,
-    paste0("step", STEP_SIZE)
+    RESULTS_STUDY_TAG
   )
   
   plots_dir = file.path(
     "Plots",
-    RESULTS_STUDY_TAG,
-    paste0("step", STEP_SIZE)
+    RESULTS_STUDY_TAG
   )
   
   dir.create(
@@ -127,22 +140,6 @@ plot_one_result = function(N_LAYERS, rank_value) {
     stop("REP does not match the saved results.")
   }
   
-  if (results$metadata$JUMP != JUMP) {
-    stop("JUMP does not match the saved results.")
-  }
-  
-  if (results$metadata$STEP_SIZE != STEP_SIZE) {
-    stop("STEP_SIZE does not match the saved results.")
-  }
-  
-  if (results$metadata$N_LAYERS != N_LAYERS) {
-    stop("N_LAYERS does not match the saved results.")
-  }
-  
-  if (results$metadata$RUN_CY != RUN_CY) {
-    stop("RUN_CY does not match the saved results.")
-  }
-  
   target_label = results$metadata$target_label
   tensor_dimensions =
     as.integer(results$metadata$tensor_dimensions)
@@ -151,11 +148,11 @@ plot_one_result = function(N_LAYERS, rank_value) {
   #   filter(n_artificial_masked >= JUMP) %>%
   #   mutate(
   plot_data = results$average_squared_error_by_step %>%
-    filter(
-      n_artificial_masked >= JUMP,
-      method != "Tensor: all layers masked"
-    ) %>%
-    mutate(
+        filter(
+          n_artificial_masked >= JUMP,
+          method != "Tensor: all layers masked"
+        ) %>%
+        mutate(
       method = factor(method, levels = method_levels),
       ribbon_lower = pmax(
         0,
@@ -246,7 +243,7 @@ plot_one_result = function(N_LAYERS, rank_value) {
     ) +
     labs(
       title = paste0(
-        "Castle staggered masking error: ",
+        "Staggered masking error: ",
         target_label
       ),
       subtitle = paste0(
@@ -258,7 +255,7 @@ plot_one_result = function(N_LAYERS, rank_value) {
       y = "Mean squared error",
       color = "Method"
     ) +
-    theme_minimal(base_size = 20) +
+    theme_minimal(base_size = 22) +
     theme(
       panel.grid.minor = element_blank(),
       legend.position = "bottom",
@@ -316,43 +313,8 @@ plot_summary = pmap_dfr(
   )
 )
 
-plots_dir = file.path(
-  "Plots",
-  RESULTS_STUDY_TAG,
-  paste0("step", STEP_SIZE)
-)
-
 dir.create(
-  plots_dir,
+  "Plots",
   recursive = TRUE,
   showWarnings = FALSE
-)
-
-plot_summary_file = file.path(
-  plots_dir,
-  paste0(
-    DATASET_TAG,
-    "_staggered_masking_plot_summary_",
-    target_name,
-    "_jump",
-    JUMP,
-    "_step",
-    STEP_SIZE,
-    rep_file_tag,
-    cy_file_tag,
-    ".csv"
-  )
-)
-
-print(
-  plot_summary,
-  n = Inf,
-  width = Inf
-)
-
-cat(
-  "\nSaved plot summary:\n",
-  plot_summary_file,
-  "\n",
-  sep = ""
 )

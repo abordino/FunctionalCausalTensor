@@ -72,19 +72,19 @@ base_theme = theme_bw(base_size = 11) +
   theme(
     panel.grid.major = element_line(color = "gray88", linewidth = 0.35),
     panel.grid.minor = element_blank(),
-    plot.title = element_text(size = 11, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(size = 9, hjust = 0.5),
-    axis.title = element_text(size = 10),
-    axis.text = element_text(size = 9),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 16, hjust = 0.5),
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 16),
     legend.position = "bottom",
     legend.title = element_blank(),
-    legend.text = element_text(size = 9),
+    legend.text = element_text(size = 16),
     legend.key.width = unit(1.35, "lines"),
     legend.spacing.x = unit(0.8, "lines"),
     legend.spacing.y = unit(0.1, "lines"),
     plot.margin = margin(6, 6, 6, 6),
-    plot.tag = element_text(face = "bold", size = 13),
-    plot.tag.position = c(0.02, 0.98)
+    plot.tag = element_text(face = "bold", size = 17),
+    plot.tag.position = c(0.98, 0.98)
   )
 
 p_runtime = ggplot(
@@ -117,8 +117,8 @@ p_runtime = ggplot(
     title = "Adjusted runtime comparison",
     subtitle = runtime_adjustment_subtitle,
     x = expression(o[k]),
-    y = runtime_adjustment_label,
-    tag = "(a)"
+    y = runtime_adjustment_label, 
+    tag = "(b)"
   ) +
   guides(
     color = guide_legend(
@@ -165,8 +165,8 @@ p_accuracy = ggplot(
     title = "Statistical accuracy",
     subtitle = expression("Mean absolute error " %+-% " standard error"),
     x = expression(o[k]),
-    y = "Mean absolute error",
-    tag = "(b)"
+    y = "Mean absolute error", 
+    tag = "(c)"
   ) +
   base_theme +
   theme(legend.position = "none")

@@ -1,434 +1,727 @@
+# Setup -----------------------------------------------------------------------
+
 setwd("~/Desktop/code")
 
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(tidyr)
-  library(tibble)
-  library(ggplot2)
+  library(tidyverse)
+  library(scales)
 })
 
-# Configuration -----------------------------------------------------------
-
-results_dir = "Results/oxford_deaths_target_layer_bootstrap/"
-plots_dir = "Plots"
-dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
-
-results_files = list.files(
-  results_dir,
-  pattern = "^oxford_deaths_target_layer_bootstrap_.*\\.rds$",
-  full.names = TRUE
-)
-
-if (!length(results_files)) {
-  stop("No saved analysis RDS found in: ", results_dir)
+save_plot_png = function(plot, filename, width, height, dpi = 320) {
+  dir.create(dirname(filename), recursive = TRUE, showWarnings = FALSE)
+  grDevices::png(
+    filename = filename,
+    width = width,
+    height = height,
+    units = "in",
+    res = dpi,
+    bg = "white"
+  )
+  on.exit(grDevices::dev.off(), add = TRUE)
+  print(plot)
+  invisible(filename)
 }
 
-results_file = results_files[which.max(file.info(results_files)$mtime)]
-analysis = readRDS(results_file)
+# Settings --------------------------------------------------------------------
 
-Y = analysis$Y
-Omega_policy = analysis$Omega_policy
-results_with_ci = analysis$results_with_ci
-main_r = analysis$metadata$r_grid[1]
-B = analysis$metadata$B
+JUMP = 30L
+STEP_SIZE = 1L # 3L
+REP = 30L
 
-tensor_data = readRDS(analysis$metadata$tensor_file)
+RUN_CY = FALSE
 
-# Plot 1: two outcome panels ----------------------------------------------
+N_LAYERS = 2L
 
-layers = dimnames(Y)[[3]]
+target_name = "deaths"
 
-if (length(layers) != 2) {
-  stop("The saved Y tensor must contain exactly two layers.")
+DATASET_TAG = "oxford_deaths"
+RESULTS_STUDY_TAG = "oxford_deaths_target_layer_bootstrap"
+
+tensor_file =
+  "Real/CovidOx/data/Omega_Y_until_2020-04-05_delay_28.rds"
+
+`%||%` = function(x, y) {
+  if (is.null(x)) y else x
 }
 
-layer_map = analysis$layer_map %>%
-  transmute(
-    layer = as.character(outcome),
-    policy = as.character(policy),
-    panel_label = as.character(panel_label)
-  )
+tensor_data = readRDS(tensor_file)
 
-plot_layer_map = tibble(layer = layers) %>%
-  left_join(layer_map, by = "layer") %>%
-  mutate(
-    outcome_cap = unname(tensor_data$outcome_caps[layer])
-  )
+slice_label = paste0(
+  "until_",
+  tensor_data$time_horizon %||% "unknown",
+  "_delay_",
+  tensor_data$delay_days %||% "unknown"
+)
 
-if (anyNA(plot_layer_map$outcome_cap)) {
-  stop("An outcome cap is missing for at least one plotted Y layer.")
+slice_label = stringr::str_replace_all(
+  slice_label,
+  "[^A-Za-z0-9._-]+",
+  "_"
+)
+
+slice_file_tag = paste0("_", slice_label)
+
+PLOT_GRID = crossing(
+  N_LAYERS = N_LAYERS,
+  rank_value = c(1L, 2L)
+)
+
+cy_file_tag = if (RUN_CY) "" else "_noCY"
+rep_file_tag = if (REP == 1L) "" else paste0("_rep", REP)
+
+method_levels = c(
+  "Tensor: all layers masked",
+  "Tensor: target layer only",
+  "Matrix"
+)
+
+if (RUN_CY) {
+  method_levels = c(
+    method_levels,
+    "CY biased",
+    "CY debiased"
+  )
 }
 
-outcome_plot_data = as.data.frame.table(
-  Y,
-  responseName = "value",
-  stringsAsFactors = FALSE
+plot_method_levels = setdiff(
+  method_levels,
+  "Tensor: all layers masked"
 )
-
-names(outcome_plot_data)[1:3] = c(
-  "country",
-  "time",
-  "layer"
-)
-
-policy_plot_data = as.data.frame.table(
-  Omega_policy,
-  responseName = "policy_on",
-  stringsAsFactors = FALSE
-)
-
-names(policy_plot_data)[1:3] = c(
-  "country",
-  "time",
-  "layer"
-)
-
-blue_pal = grDevices::colorRampPalette(
-  c("lightblue", "blue")
-)(101)
-
-red_pal = grDevices::colorRampPalette(
-  c("pink", "red")
-)(101)
-
-country_levels = dimnames(Y)[[1]]
-
-country_labels = country_levels
-country_labels[seq_along(country_labels) %% 1 == 1] = ""
-names(country_labels) = country_levels
-
-y_plot_df = as_tibble(outcome_plot_data) %>%
-  left_join(
-    as_tibble(policy_plot_data),
-    by = c("country", "time", "layer")
-  ) %>%
-  left_join(
-    plot_layer_map,
-    by = "layer"
-  ) %>%
-  drop_na(value, policy_on) %>%
-  mutate(
-    date = as.Date(time),
-    policy_on = as.logical(policy_on),
-    
-    value_capped = pmin(value, outcome_cap),
-    value_scaled = value_capped / outcome_cap,
-    
-    intensity_index =
-      as.integer(round(value_scaled * 100)) + 1L,
-    
-    intensity_index =
-      pmin(101L, pmax(1L, intensity_index)),
-    
-    fill_colour = if_else(
-      policy_on,
-      red_pal[intensity_index],
-      blue_pal[intensity_index]
-    ),
-    
-    country = factor(
-      country,
-      levels = country_levels
-    ),
-    
-    panel_label = factor(
-      panel_label,
-      levels = plot_layer_map$panel_label
-    )
-  )
-
-p_y = ggplot(
-  y_plot_df,
-  aes(
-    x = date,
-    y = country,
-    fill = fill_colour
-  )
-) +
-  geom_tile() +
-  facet_wrap(
-    ~ panel_label,
-    nrow = 1
-  ) +
-  scale_y_discrete(
-    breaks = country_levels,
-    labels = country_labels,
-    drop = FALSE
-  ) +
-  scale_fill_identity() +
-  labs(
-    title = paste0(
-      "Outcome tensor values between ",
-      tensor_data$start.date,
-      " to ",
-      tensor_data$time_horizon,
-      " \nusing outcomes at t + ",
-      tensor_data$delay_days,
-      " days"
-    ),
-    x = "Policy date",
-    y = "Country"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    axis.text.y = element_text(size = 6),
-    axis.text.x = element_text(
-      angle = 45,
-      hjust = 1
-    ),
-    panel.grid = element_blank(),
-    strip.text = element_text(
-      face = "bold",
-      size = 9
-    ),
-    plot.title = element_text(
-      face = "bold",
-      size = 14
-    ),
-    legend.position = "none"
-  )
-
-panel_file = file.path(
-  plots_dir,
-  "data_panels.png"
-)
-
-ggsave(
-  filename = panel_file,
-  plot = p_y,
-  width = 18,
-  height = 8,
-  units = "in",
-  dpi = 600
-)
-
-print(p_y)
-
-# Plot 2: final ATE and Trend results -------------------------------------
 
 method_colors = c(
-  "Tensor" = "#1f77b4",
-  "Matrix" = "#ff7f0e"
+  `Tensor: all layers masked` = "#1f77b4",
+  `Tensor: target layer only` = "#d62728",
+  Matrix = "#ff7f0e",
+  `CY biased` = "#2ca02c",
+  `CY debiased` = "#9467bd"
 )
 
-get_symmetric_ylim = function(
-    dat,
-    pad_mult = 1.08
-) {
-  y_vals = c(
-    dat$ci_low,
-    dat$ci_high,
-    dat$point_estimate
+method_shapes = c(
+  `Tensor: all layers masked` = 16,
+  `Tensor: target layer only` = 17,
+  Matrix = 15,
+  `CY biased` = 18,
+  `CY debiased` = 8
+)
+
+rank_line_types = c(
+  `Rank 3` = "solid",
+  `Rank 4` = "longdash"
+)
+
+rank_shapes = c(
+  `Rank 3` = 17,
+  `Rank 4` = 17
+)
+
+rank_colors = c(
+  `Rank 3` = "#d62728",
+  `Rank 4` = "#e377c2"
+)
+
+# Summary plot: ranks 1 and 2 -------------------------------------------------
+
+plot_one_result = function(N_LAYERS, rank_value) {
+  N_LAYERS = as.integer(N_LAYERS)
+  rank_value = as.integer(rank_value)
+  
+  results_dir = file.path(
+    "Results",
+    RESULTS_STUDY_TAG,
+    paste0("step", STEP_SIZE)
   )
   
-  y_vals = y_vals[is.finite(y_vals)]
+  plots_dir = file.path(
+    "Plots",
+    RESULTS_STUDY_TAG,
+    paste0("step", STEP_SIZE)
+  )
   
-  if (length(y_vals) == 0) {
-    return(c(-1, 1))
+  dir.create(
+    plots_dir,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
+  
+  result_file = file.path(
+    results_dir,
+    paste0(
+      DATASET_TAG,
+      "_staggered_masking_results_",
+      target_name,
+      "_rank",
+      rank_value,
+      "_jump",
+      JUMP,
+      "_step",
+      STEP_SIZE,
+      rep_file_tag,
+      cy_file_tag,
+      slice_file_tag,
+      ".rds"
+    )
+  )
+  
+  if (!file.exists(result_file)) {
+    stop("Result file not found: ", result_file)
   }
   
-  y_abs_max = max(
-    abs(y_vals),
+  results = readRDS(result_file)
+  
+  if (results$metadata$REP != REP) {
+    stop("REP does not match the saved results.")
+  }
+  
+  if (results$metadata$JUMP != JUMP) {
+    stop("JUMP does not match the saved results.")
+  }
+  
+  if (results$metadata$STEP_SIZE != STEP_SIZE) {
+    stop("STEP_SIZE does not match the saved results.")
+  }
+  
+  if (results$metadata$N_LAYERS != N_LAYERS) {
+    stop("N_LAYERS does not match the saved results.")
+  }
+  
+  if (results$metadata$RUN_CY != RUN_CY) {
+    stop("RUN_CY does not match the saved results.")
+  }
+  
+  if (results$metadata$slice_label != slice_label) {
+    stop("The Oxford data slice does not match the saved results.")
+  }
+  
+  if (
+    normalizePath(
+      results$metadata$tensor_file,
+      winslash = "/",
+      mustWork = FALSE
+    ) !=
+    normalizePath(
+      tensor_file,
+      winslash = "/",
+      mustWork = FALSE
+    )
+  ) {
+    stop("tensor_file does not match the saved results.")
+  }
+  
+  target_label = results$metadata$target_label
+  tensor_dimensions =
+    as.integer(results$metadata$tensor_dimensions)
+  
+  plot_data = results$average_squared_error_by_step %>%
+    filter(
+      n_artificial_masked >= JUMP,
+      method != "Tensor: all layers masked"
+    ) %>%
+    mutate(
+      method = factor(
+        method,
+        levels = plot_method_levels
+      ),
+      ribbon_lower = pmax(
+        0,
+        average_squared_error -
+          coalesce(se_squared_error, 0)
+      ),
+      ribbon_upper =
+        average_squared_error +
+        coalesce(se_squared_error, 0)
+    ) %>%
+    arrange(method, n_artificial_masked)
+  
+  if (nrow(plot_data) == 0L) {
+    stop("No summary data are available.")
+  }
+  
+  first_mask_fraction = min(
+    plot_data$masking_fraction,
     na.rm = TRUE
   )
   
-  if (!is.finite(y_abs_max) || y_abs_max == 0) {
-    return(c(-1, 1))
-  }
+  last_mask_fraction = max(
+    plot_data$masking_fraction,
+    na.rm = TRUE
+  )
   
-  y_abs_max = y_abs_max * pad_mult
+  summary_figure = ggplot(
+    plot_data,
+    aes(
+      x = masking_fraction,
+      y = average_squared_error,
+      color = method,
+      fill = method,
+      shape = method,
+      group = method
+    )
+  ) +
+    geom_ribbon(
+      aes(
+        ymin = ribbon_lower,
+        ymax = ribbon_upper
+      ),
+      alpha = 0.12,
+      color = NA,
+      na.rm = TRUE,
+      show.legend = FALSE
+    ) +
+    geom_line(
+      linewidth = 1,
+      na.rm = TRUE
+    ) +
+    geom_point(
+      size = 2.1,
+      na.rm = TRUE
+    ) +
+    scale_x_continuous(
+      limits = c(
+        first_mask_fraction,
+        last_mask_fraction
+      ),
+      breaks = breaks_extended(n = 6),
+      labels = label_percent(accuracy = 1),
+      expand = expansion(mult = c(0.01, 0.02))
+    ) +
+    scale_y_continuous(
+      limits = c(0, 20),
+      breaks = breaks_extended(n = 5),
+      labels = label_number(accuracy = 0.0001)
+    ) +
+    scale_color_manual(
+      values = method_colors[plot_method_levels],
+      breaks = plot_method_levels,
+      drop = FALSE
+    ) +
+    scale_fill_manual(
+      values = method_colors[plot_method_levels],
+      breaks = plot_method_levels,
+      drop = FALSE
+    ) +
+    scale_shape_manual(
+      values = method_shapes[plot_method_levels],
+      breaks = plot_method_levels,
+      drop = FALSE
+    ) +
+    guides(
+      fill = "none",
+      shape = "none"
+    ) +
+    labs(
+      title = paste0(
+        "CovidOx staggered masking error: ",
+        target_label
+      ),
+      subtitle = paste0(
+        REP,
+        " replicates; shaded bands show mean +/- 1 SE; estimation rank = ",
+        rank_value
+      ),
+      x = "Share of terminal artificial mask",
+      y = "Mean squared error",
+      color = "Method"
+    ) +
+    theme_minimal(base_size = 20) +
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom",
+      plot.title = element_text(face = "bold")
+    )
   
-  c(-y_abs_max, y_abs_max)
+  plot_file = file.path(
+    plots_dir,
+    paste0(
+      DATASET_TAG,
+      "_staggered_masking_summary_",
+      target_name,
+      "_rank",
+      rank_value,
+      "_jump",
+      JUMP,
+      "_step",
+      STEP_SIZE,
+      rep_file_tag,
+      cy_file_tag,
+      slice_file_tag,
+      ".png"
+    )
+  )
+  
+  save_plot_png(
+    plot = summary_figure,
+    filename = plot_file,
+    width = 11,
+    height = 7,
+    dpi = 320
+  )
+  
+  tibble(
+    N_LAYERS = N_LAYERS,
+    rank_value = rank_value,
+    REP = REP,
+    result_file = result_file,
+    plot_file = plot_file,
+    first_mask_fraction = first_mask_fraction,
+    last_mask_fraction = last_mask_fraction,
+    tensor_dimensions = paste(
+      tensor_dimensions,
+      collapse = " x "
+    )
+  )
 }
 
-psi_delta_plot_data = results_with_ci %>%
-  filter(
-    r == main_r,
-    functional %in% c("ATE", "Trend"),
-    quantity %in% c(
-      "Psi0",
-      "Psi0_matrix",
-      "Delta_h",
-      "Delta_h_matrix"
-    )
-  ) %>%
-  mutate(
-    estimand = case_when(
-      quantity %in%
-        c("Psi0", "Psi0_matrix") ~ "Psi0",
-      
-      quantity %in%
-        c("Delta_h", "Delta_h_matrix") ~ "Delta"
-    ),
-    
-    method = case_when(
-      quantity %in%
-        c("Psi0", "Delta_h") ~ "Tensor",
-      
-      quantity %in%
-        c("Psi0_matrix", "Delta_h_matrix") ~ "Matrix"
-    ),
-    
-    method = factor(
-      method,
-      levels = c("Tensor", "Matrix")
-    ),
-    
-    x_group = paste(
-      functional,
-      estimand,
-      sep = "\n"
-    ),
-    
-    x_group = factor(
-      x_group,
-      levels = c(
-        "ATE\nPsi0",
-        "ATE\nDelta",
-        "Trend\nPsi0",
-        "Trend\nDelta"
+# Summary plot: ranks 3 and 4 -------------------------------------------------
+
+plot_rank_3_4_tensor = function(N_LAYERS) {
+  N_LAYERS = as.integer(N_LAYERS)
+  
+  results_dir = file.path(
+    "Results",
+    RESULTS_STUDY_TAG,
+    paste0("step", STEP_SIZE)
+  )
+  
+  plots_dir = file.path(
+    "Plots",
+    RESULTS_STUDY_TAG,
+    paste0("step", STEP_SIZE)
+  )
+  
+  dir.create(
+    plots_dir,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
+  
+  rank_values = c(3L, 4L)
+  
+  rank_results = map(
+    rank_values,
+    function(rank_value) {
+      result_file = file.path(
+        results_dir,
+        paste0(
+          DATASET_TAG,
+          "_staggered_masking_results_",
+          target_name,
+          "_rank",
+          rank_value,
+          "_jump",
+          JUMP,
+          "_step",
+          STEP_SIZE,
+          rep_file_tag,
+          cy_file_tag,
+          slice_file_tag,
+          ".rds"
+        )
       )
-    ),
-    
-    x_num = as.numeric(x_group),
-    
-    method_offset = if_else(
-      method == "Tensor",
-      -0.13,
-      0.13
-    ),
-    
-    x_pos = x_num + method_offset
+      
+      if (!file.exists(result_file)) {
+        stop("Result file not found: ", result_file)
+      }
+      
+      results = readRDS(result_file)
+      
+      if (results$metadata$REP != REP) {
+        stop("REP does not match the saved results.")
+      }
+      
+      if (results$metadata$JUMP != JUMP) {
+        stop("JUMP does not match the saved results.")
+      }
+      
+      if (results$metadata$STEP_SIZE != STEP_SIZE) {
+        stop("STEP_SIZE does not match the saved results.")
+      }
+      
+      if (results$metadata$N_LAYERS != N_LAYERS) {
+        stop("N_LAYERS does not match the saved results.")
+      }
+      
+      if (results$metadata$RUN_CY != RUN_CY) {
+        stop("RUN_CY does not match the saved results.")
+      }
+      
+      if (results$metadata$slice_label != slice_label) {
+        stop("The Oxford data slice does not match the saved results.")
+      }
+      
+      if (
+        normalizePath(
+          results$metadata$tensor_file,
+          winslash = "/",
+          mustWork = FALSE
+        ) !=
+        normalizePath(
+          tensor_file,
+          winslash = "/",
+          mustWork = FALSE
+        )
+      ) {
+        stop("tensor_file does not match the saved results.")
+      }
+      
+      plot_data = results$average_squared_error_by_step %>%
+        filter(
+          n_artificial_masked >= JUMP,
+          method == "Tensor: target layer only"
+        ) %>%
+        mutate(
+          rank_value = rank_value,
+          rank_label = paste0("Rank ", rank_value),
+          ribbon_lower = pmax(
+            0,
+            average_squared_error -
+              coalesce(se_squared_error, 0)
+          ),
+          ribbon_upper =
+            average_squared_error +
+            coalesce(se_squared_error, 0)
+        ) %>%
+        arrange(n_artificial_masked)
+      
+      list(
+        results = results,
+        result_file = result_file,
+        plot_data = plot_data
+      )
+    }
   )
+  
+  target_labels = map_chr(
+    rank_results,
+    ~ .x$results$metadata$target_label
+  )
+  
+  if (length(unique(target_labels)) != 1L) {
+    stop("Target labels differ across ranks 3 and 4.")
+  }
+  
+  target_label = target_labels[[1]]
+  
+  tensor_dimensions = as.integer(
+    rank_results[[1]]$results$metadata$tensor_dimensions
+  )
+  
+  plot_data = map_dfr(
+    rank_results,
+    "plot_data"
+  ) %>%
+    mutate(
+      rank_label = factor(
+        rank_label,
+        levels = c("Rank 3", "Rank 4")
+      )
+    )
+  
+  if (nrow(plot_data) == 0L) {
+    stop("No rank 3/4 target-layer Tensor data are available.")
+  }
+  
+  first_mask_fraction = min(
+    plot_data$masking_fraction,
+    na.rm = TRUE
+  )
+  
+  last_mask_fraction = max(
+    plot_data$masking_fraction,
+    na.rm = TRUE
+  )
+  
+  summary_figure = ggplot(
+    plot_data,
+    aes(
+      x = masking_fraction,
+      y = average_squared_error,
+      color = rank_label,
+      fill = rank_label,
+      linetype = rank_label,
+      shape = rank_label,
+      group = rank_label
+    )
+  ) +
+    geom_ribbon(
+      aes(
+        ymin = ribbon_lower,
+        ymax = ribbon_upper
+      ),
+      alpha = 0.12,
+      color = NA,
+      na.rm = TRUE,
+      show.legend = FALSE
+    ) +
+    geom_line(
+      linewidth = 1,
+      na.rm = TRUE
+    ) +
+    geom_point(
+      size = 2.1,
+      na.rm = TRUE
+    ) +
+    scale_color_manual(
+      values = rank_colors,
+      breaks = c("Rank 3", "Rank 4"),
+      drop = FALSE
+    ) +
+    scale_fill_manual(
+      values = rank_colors,
+      breaks = c("Rank 3", "Rank 4"),
+      drop = FALSE
+    ) +
+    scale_linetype_manual(
+      values = rank_line_types,
+      breaks = c("Rank 3", "Rank 4"),
+      drop = FALSE
+    ) +
+    scale_shape_manual(
+      values = rank_shapes,
+      breaks = c("Rank 3", "Rank 4"),
+      drop = FALSE
+    ) +
+    scale_x_continuous(
+      limits = c(
+        first_mask_fraction,
+        last_mask_fraction
+      ),
+      breaks = breaks_extended(n = 6),
+      labels = label_percent(accuracy = 1),
+      expand = expansion(mult = c(0.01, 0.02))
+    ) +
+    scale_y_continuous(
+      limits = c(0, 20),
+      breaks = breaks_extended(n = 5),
+      labels = label_number(accuracy = 0.0001)
+    ) +
+    guides(
+      fill = "none",
+      shape = "none"
+    ) +
+    labs(
+      title = paste0(
+        "CovidOx staggered masking error: ",
+        target_label
+      ),
+      subtitle = paste0(
+        REP,
+        " replicates; shaded bands show mean +/- 1 SE; ",
+        "Tensor: target layer only"
+      ),
+      x = "Share of terminal artificial mask",
+      y = "Mean squared error",
+      color = "Estimation rank",
+      linetype = "Estimation rank"
+    ) +
+    theme_minimal(base_size = 20) +
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom",
+      plot.title = element_text(face = "bold")
+    )
+  
+  plot_file = file.path(
+    plots_dir,
+    paste0(
+      DATASET_TAG,
+      "_staggered_masking_summary_",
+      target_name,
+      "_rank3_rank4_target_tensor",
+      "_jump",
+      JUMP,
+      "_step",
+      STEP_SIZE,
+      rep_file_tag,
+      cy_file_tag,
+      slice_file_tag,
+      ".png"
+    )
+  )
+  
+  save_plot_png(
+    plot = summary_figure,
+    filename = plot_file,
+    width = 11,
+    height = 7,
+    dpi = 320
+  )
+  
+  tibble(
+    N_LAYERS = N_LAYERS,
+    rank_value = "3 & 4",
+    REP = REP,
+    result_file = paste(
+      map_chr(rank_results, "result_file"),
+      collapse = "; "
+    ),
+    plot_file = plot_file,
+    first_mask_fraction = first_mask_fraction,
+    last_mask_fraction = last_mask_fraction,
+    tensor_dimensions = paste(
+      tensor_dimensions,
+      collapse = " x "
+    )
+  )
+}
 
-y_limits = get_symmetric_ylim(
-  psi_delta_plot_data
+# Generate summary plots ------------------------------------------------------
+
+plot_summary_rank_1_2 = pmap_dfr(
+  PLOT_GRID,
+  ~ plot_one_result(
+    N_LAYERS = ..1,
+    rank_value = ..2
+  )
 )
 
-final_plot = ggplot(
-  psi_delta_plot_data
-) +
-  geom_hline(
-    yintercept = 0,
-    linetype = "dashed",
-    linewidth = 0.3
-  ) +
-  geom_segment(
-    aes(
-      x = x_pos,
-      xend = x_pos,
-      y = ci_low,
-      yend = ci_high,
-      color = method
-    ),
-    linewidth = 0.45,
-    na.rm = TRUE
-  ) +
-  geom_segment(
-    aes(
-      x = x_pos - 0.055,
-      xend = x_pos + 0.055,
-      y = ci_low,
-      yend = ci_low,
-      color = method
-    ),
-    linewidth = 0.45,
-    na.rm = TRUE
-  ) +
-  geom_segment(
-    aes(
-      x = x_pos - 0.055,
-      xend = x_pos + 0.055,
-      y = ci_high,
-      yend = ci_high,
-      color = method
-    ),
-    linewidth = 0.45,
-    na.rm = TRUE
-  ) +
-  geom_point(
-    aes(
-      x = x_pos,
-      y = point_estimate,
-      color = method,
-      shape = method
-    ),
-    size = 2.6,
-    na.rm = TRUE
-  ) +
-  coord_cartesian(
-    ylim = y_limits
-  ) +
-  scale_x_continuous(
-    breaks = seq_along(
-      levels(psi_delta_plot_data$x_group)
-    ),
-    labels = levels(
-      psi_delta_plot_data$x_group
-    ),
-    expand = expansion(
-      mult = c(0.08, 0.08)
-    )
-  ) +
-  scale_y_continuous(
-    breaks = scales::breaks_extended(n = 5),
-    labels = scales::label_number(
-      accuracy = 0.01
-    )
-  ) +
-  scale_color_manual(
-    values = method_colors
-  ) +
-  scale_shape_manual(
-    values = c(
-      "Tensor" = 16,
-      "Matrix" = 17
-    )
-  ) +
-  labs(
-    title =
-      "CovidOx | Deaths target layer: Psi0 and Delta",
-    
-    subtitle = paste0(
-      "Rank r = ",
-      main_r,
-      "; B = ",
-      B,
-      "; intervals are point estimate +/- 1.96 x bootstrap SE"
-    ),
-    
-    x = "",
-    
-    y =
-      "Estimated quantity with bootstrap-SE 95% CI",
-    
-    color = "Method",
-    shape = "Method"
-  ) +
-  theme_minimal(base_size = 11) +
-  theme(
-    panel.grid.minor = element_blank(),
-    legend.position = "bottom",
-    plot.title = element_text(face = "bold"),
-    axis.text.x = element_text(size = 10),
-    axis.text.y = element_text(size = 9)
-  )
+plot_summary_rank_3_4 = plot_rank_3_4_tensor(
+  N_LAYERS = N_LAYERS
+)
 
-final_file = file.path(
+plot_summary = bind_rows(
+  plot_summary_rank_1_2 %>%
+    mutate(rank_value = as.character(rank_value)),
+  plot_summary_rank_3_4
+)
+
+plots_dir = file.path(
+  "Plots",
+  RESULTS_STUDY_TAG,
+  paste0("step", STEP_SIZE)
+)
+
+dir.create(
   plots_dir,
-  "final_ATE_Trend.png"
+  recursive = TRUE,
+  showWarnings = FALSE
 )
 
-ggsave(
-  filename = final_file,
-  plot = final_plot,
-  width = 11,
-  height = 7.5,
-  dpi = 320
+plot_summary_file = file.path(
+  plots_dir,
+  paste0(
+    DATASET_TAG,
+    "_staggered_masking_plot_summary_",
+    target_name,
+    "_jump",
+    JUMP,
+    "_step",
+    STEP_SIZE,
+    rep_file_tag,
+    cy_file_tag,
+    slice_file_tag,
+    ".csv"
+  )
 )
 
-print(final_plot)
+print(
+  plot_summary,
+  n = Inf,
+  width = Inf
+)
 
-cat("Loaded:", results_file, "\n")
-cat("Saved:", panel_file, "\n")
-cat("Saved:", final_file, "\n")
+cat(
+  "\nSaved plot summary:\n",
+  plot_summary_file,
+  "\n",
+  sep = ""
+)

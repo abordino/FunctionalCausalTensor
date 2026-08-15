@@ -4,3 +4,5 @@ simulations:
   runtimeVsAccuracy: true
   castle: true
   covid: true
+  CY: true
+  masking: true
