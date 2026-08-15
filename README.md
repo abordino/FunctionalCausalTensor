@@ -4,16 +4,21 @@ This repository contains the implementation of the algorithms presented in [this
 
 In the main directory, you will find implementations of the algorithms introduced in the paper.
 
-* **`synthetic/`**
-  Validates our theoretical claims using synthetically generated datasets.
+* **`Synthetic/4Block`**
+  Validates our theoretical claims using synthetically generated datasets with 4-block missingness.
 
-* **`real-world/CastleDoctrine/`**
+* **`Synthetic/Staggered`**
+  Validates our theoretical claims using synthetically generated datasets with staggered missingness.
+
+* **`Real/CastleDoctrine/`**
   Validates our methodologies on the Castle Doctrine dataset. The dataset is taken from the `PolicyEval` repository and can be found at [this link](https://github.com/guerramarcelino/PolicyEval/raw/main/Datasets/).
 
-* **`real-world/CovidOx/`**
+* **`Real/CovidOx/`**
   Validates our methodologies on COVID-19 data. The datasets are constructed by merging policy-response indicators from the [Oxford COVID-19 Government Response Tracker](https://github.com/OxCGRT/covid-policy-tracker) with epidemiological outcomes from the [Our World in Data COVID-19 dataset](https://github.com/owid/covid-19-data).
 
 ---
 
-Feel free to explore each folder based on your use case or interest.
+Feel free to explore each folder based on your use case or interest. 
+To reproduce the simulation results, simply run the relevant code in `wrapper.R`.
+
 
