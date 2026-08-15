@@ -73,7 +73,6 @@ make_noiseless_staggered_panel = function() {
 run_cy_noiseless_staggered_test = function(
     seed = 20260803L,
     verbose = FALSE) {
-  source(method_path, local = .GlobalEnv)
   
   if (!exists("cy_complete_staggered_layer", mode = "function")) {
     stop("CYNuclear.R did not define cy_complete_staggered_layer().")
