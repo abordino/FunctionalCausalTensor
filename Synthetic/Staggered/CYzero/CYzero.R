@@ -71,7 +71,6 @@ make_noiseless_staggered_panel = function() {
 }
 
 run_cy_noiseless_staggered_test = function(
-    method_path = find_cy_method_file(),
     seed = 20260803L,
     verbose = FALSE) {
   source(method_path, local = .GlobalEnv)
