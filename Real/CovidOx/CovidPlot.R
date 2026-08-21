@@ -26,9 +26,9 @@ save_plot_png = function(plot, filename, width, height, dpi = 320) {
 
 JUMP = 30L
 STEP_SIZE = 1L # 3L
-REP = 30L
+REP = 10L
 
-RUN_CY = FALSE
+RUN_CY = TRUE
 
 N_LAYERS = 2L
 
@@ -221,8 +221,13 @@ plot_one_result = function(N_LAYERS, rank_value) {
         method,
         levels = plot_method_levels
       ),
+      # ribbon_lower = pmax(
+      #   0,
+      #   average_squared_error -
+      #     coalesce(se_squared_error, 0)
+      # ),
       ribbon_lower = pmax(
-        0,
+        1e-10,
         average_squared_error -
           coalesce(se_squared_error, 0)
       ),
@@ -284,10 +289,17 @@ plot_one_result = function(N_LAYERS, rank_value) {
       labels = label_percent(accuracy = 1),
       expand = expansion(mult = c(0.01, 0.02))
     ) +
-    scale_y_continuous(
-      limits = c(0, 20),
-      breaks = breaks_extended(n = 5),
-      labels = label_number(accuracy = 0.0001)
+    # scale_y_continuous(
+    #   limits = c(0, 20),
+    #   breaks = breaks_extended(n = 5),
+    #   labels = label_number(accuracy = 0.0001)
+    # ) +
+    scale_y_log10(
+      breaks = breaks_log(n = 6),
+      labels = label_number()
+    ) +
+    coord_cartesian(
+      ylim = c(1e-2, 20)
     ) +
     scale_color_manual(
       values = method_colors[plot_method_levels],
@@ -319,7 +331,7 @@ plot_one_result = function(N_LAYERS, rank_value) {
         rank_value
       ),
       x = "Share of terminal artificial mask",
-      y = "Mean squared error",
+      y = "Mean squared error (log scale)",
       color = "Method"
     ) +
     theme_minimal(base_size = 20) +
@@ -471,8 +483,13 @@ plot_rank_3_4_tensor = function(N_LAYERS) {
         mutate(
           rank_value = rank_value,
           rank_label = paste0("Rank ", rank_value),
+          # ribbon_lower = pmax(
+          #   0,
+          #   average_squared_error -
+          #     coalesce(se_squared_error, 0)
+          # ),
           ribbon_lower = pmax(
-            0,
+            1e-10,
             average_squared_error -
               coalesce(se_squared_error, 0)
           ),
@@ -589,10 +606,17 @@ plot_rank_3_4_tensor = function(N_LAYERS) {
       labels = label_percent(accuracy = 1),
       expand = expansion(mult = c(0.01, 0.02))
     ) +
-    scale_y_continuous(
-      limits = c(0, 20),
-      breaks = breaks_extended(n = 5),
-      labels = label_number(accuracy = 0.0001)
+    # scale_y_continuous(
+    #   limits = c(0, 20),
+    #   breaks = breaks_extended(n = 5),
+    #   labels = label_number(accuracy = 0.0001)
+    # ) +
+    scale_y_log10(
+      breaks = breaks_log(n = 6),
+      labels = label_number()
+    ) +
+    coord_cartesian(
+      ylim = c(1e-2, 20)
     ) +
     guides(
       fill = "none",
