@@ -26,7 +26,7 @@ save_plot_png = function(plot, filename, width, height, dpi = 320) {
 
 JUMP = 150L # 80
 STEP_SIZE = 1L # 3L
-REP = 30L
+REP = 30L #10L
 
 RUN_CY = FALSE # TRUE
 
@@ -257,15 +257,6 @@ plot_one_result = function(N_LAYERS, rank_value) {
       shape = "none"
     ) +
     labs(
-      title = paste0(
-        "Castle staggered masking error: ",
-        target_label
-      ),
-      subtitle = paste0(
-        REP,
-        " replicates; shaded bands show mean +/- 1 SE; estimation rank = ",
-        rank_value
-      ),
       x = "Share of terminal artificial mask",
       y = "Mean squared error (log scale)",
       color = "Method"
