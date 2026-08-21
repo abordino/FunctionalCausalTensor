@@ -26,9 +26,9 @@ save_plot_png = function(plot, filename, width, height, dpi = 320) {
 
 JUMP = 30L
 STEP_SIZE = 1L # 3L
-REP = 10L
+REP = 30L 
 
-RUN_CY = TRUE
+RUN_CY = FALSE
 
 N_LAYERS = 2L
 
@@ -321,15 +321,6 @@ plot_one_result = function(N_LAYERS, rank_value) {
       shape = "none"
     ) +
     labs(
-      title = paste0(
-        "CovidOx staggered masking error: ",
-        target_label
-      ),
-      subtitle = paste0(
-        REP,
-        " replicates; shaded bands show mean +/- 1 SE; estimation rank = ",
-        rank_value
-      ),
       x = "Share of terminal artificial mask",
       y = "Mean squared error (log scale)",
       color = "Method"
@@ -623,15 +614,6 @@ plot_rank_3_4_tensor = function(N_LAYERS) {
       shape = "none"
     ) +
     labs(
-      title = paste0(
-        "CovidOx staggered masking error: ",
-        target_label
-      ),
-      subtitle = paste0(
-        REP,
-        " replicates; shaded bands show mean +/- 1 SE; ",
-        "Tensor: target layer only"
-      ),
       x = "Share of terminal artificial mask",
       y = "Mean squared error",
       color = "Estimation rank",
