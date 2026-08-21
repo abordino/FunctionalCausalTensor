@@ -6,17 +6,17 @@ suppressPackageStartupMessages(library(tidyverse))
 
 # Settings --------------------------------------------------------------------
 
-RUN_CY = TRUE
+RUN_CY = FALSE
 
 source("bilinearTensorAllFunction.R")
 if (RUN_CY) {
   source("CYNuclear.R")
 }
 
-JUMP = 80L
-STEP_SIZE = 3L # 1L
-REP = 30L # 30L
-REP_SEED = 20260805L
+JUMP = 150L #80L
+STEP_SIZE = 1L # 3L
+REP = 30L # 10L
+REP_SEED = 200801 # 20260805
 
 ESTIMATION_RANKS = c(1L, 2L, 3L)
 
@@ -26,7 +26,7 @@ target_name = "motor"
 tau = 0.01
 cy_seed = 123L
 
-N_FULL_ROWS = 9L # 3L
+N_FULL_ROWS = 3L # 9L
 N_FULL_COLUMNS = 4L # 4L
 
 SAVE_CSV_OUTPUTS = FALSE
