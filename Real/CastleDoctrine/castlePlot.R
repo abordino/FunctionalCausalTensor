@@ -24,11 +24,11 @@ save_plot_png = function(plot, filename, width, height, dpi = 320) {
 
 # Settings --------------------------------------------------------------------
 
-JUMP = 80L
-STEP_SIZE = 1L # 1L
+JUMP = 150L # 80
+STEP_SIZE = 1L # 3L
 REP = 30L
 
-RUN_CY = FALSE
+RUN_CY = FALSE # TRUE
 
 N_LAYERS = 4L
 
@@ -157,8 +157,13 @@ plot_one_result = function(N_LAYERS, rank_value) {
     ) %>%
     mutate(
       method = factor(method, levels = method_levels),
+      # ribbon_lower = pmax(
+      #   0,
+      #   average_squared_error -
+      #     coalesce(se_squared_error, 0)
+      # ),
       ribbon_lower = pmax(
-        0,
+        1e-10,
         average_squared_error -
           coalesce(se_squared_error, 0)
       ),
@@ -220,10 +225,17 @@ plot_one_result = function(N_LAYERS, rank_value) {
       labels = label_percent(accuracy = 1),
       expand = expansion(mult = c(0.01, 0.02))
     ) +
-    scale_y_continuous(
-      limits = c(0, 0.1),
-      breaks = breaks_extended(n = 5),
-      labels = label_number(accuracy = 0.0001)
+    # scale_y_continuous(
+    #   limits = c(0, 0.1),
+    #   breaks = breaks_extended(n = 5),
+    #   labels = label_number(accuracy = 0.0001)
+    # ) +
+    scale_y_log10(
+      breaks = breaks_log(n = 6),
+      labels = label_number()
+    ) +
+    coord_cartesian(
+      ylim = c(1e-4, 0.1)
     ) +
     scale_color_manual(
       values = method_colors[method_levels],
@@ -255,7 +267,7 @@ plot_one_result = function(N_LAYERS, rank_value) {
         rank_value
       ),
       x = "Share of terminal artificial mask",
-      y = "Mean squared error",
+      y = "Mean squared error (log scale)",
       color = "Method"
     ) +
     theme_minimal(base_size = 20) +
